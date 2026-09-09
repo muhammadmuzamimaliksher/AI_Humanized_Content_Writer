@@ -8,9 +8,10 @@ from config import STAGE_CONFIG
 
 def _client(api_key):
     """
-    Create a Groq API client.
+    Create and return a Groq client.
+
     Priority:
-    1. API key passed from Streamlit
+    1. API key supplied by Streamlit
     2. GROQ_API_KEY environment variable
     """
 
@@ -19,13 +20,13 @@ def _client(api_key):
     if not key:
         raise RuntimeError(
             "Groq API key is missing. "
-            "Configure GROQ_API_KEY in Streamlit Secrets."
+            "Add GROQ_API_KEY to Streamlit Secrets."
         )
 
     if not key.startswith("gsk_"):
         raise RuntimeError(
-            "Invalid Groq API key format. "
-            "Your Groq key should normally start with 'gsk_'."
+            "Invalid Groq API key. "
+            "A Groq API key normally starts with 'gsk_'."
         )
 
     return Groq(api_key=key)
@@ -33,12 +34,13 @@ def _client(api_key):
 
 def _call(client, model, system, prompt, retries=3):
     """
-    Send a request to Groq with automatic retries.
+    Call Groq with automatic retry and exponential backoff.
     """
 
-    last = None
+    last_error = None
 
     for attempt in range(retries):
+
         try:
 
             response = client.chat.completions.create(
@@ -57,69 +59,93 @@ def _call(client, model, system, prompt, retries=3):
             )
 
             if not response.choices:
-                raise RuntimeError("Groq returned no choices.")
+                raise RuntimeError(
+                    "Groq returned no response choices."
+                )
 
             text = response.choices[0].message.content
 
             if not text:
-                raise RuntimeError("Groq returned an empty response.")
+                raise RuntimeError(
+                    "Groq returned an empty response."
+                )
 
             text = text.strip()
 
             if not text:
-                raise RuntimeError("Groq returned an empty response.")
+                raise RuntimeError(
+                    "Groq returned an empty response."
+                )
 
             return text
 
-        except Exception as e:
-            last = e
+        except Exception as error:
+
+            last_error = error
 
             if attempt < retries - 1:
                 time.sleep(2 ** attempt)
 
-    raise RuntimeError(str(last))
+    raise RuntimeError(str(last_error))
 
 
 def run_stage(stage, ctx, previous, api_key, model):
 
     if stage not in STAGE_CONFIG:
-        raise RuntimeError(f"Unknown stage: {stage}")
+        return {
+            "ok": False,
+            "error": f"Unknown pipeline stage: {stage}",
+            "key": ""
+        }
 
     cfg = STAGE_CONFIG[stage]
 
     prompt = f"""
-Topic: {ctx['topic']}
+CONTENT BRIEF
+
+Topic:
+{ctx.get('topic', '')}
 
 Keywords:
-{ctx['keywords']}
+{ctx.get('keywords', '')}
 
 Tone:
-{ctx['tone']}
+{ctx.get('tone', '')}
 
 Language:
-{ctx['language']}
+{ctx.get('language', '')}
 
-Audience:
-{ctx['audience']}
+Target Audience:
+{ctx.get('audience', '')}
 
-Length:
-{ctx['length']}
+Target Length:
+{ctx.get('length', '')}
 
-Extra instructions:
-{ctx['extra']}
+Additional Instructions:
+{ctx.get('extra', '')}
 
-Previous stage:
-{previous or 'None'}
 
-Task:
+PREVIOUS STAGE OUTPUT
+
+{previous or 'No previous stage output.'}
+
+
+CURRENT TASK
+
 {cfg['task']}
 
-Rules:
-- Be useful and original.
-- Do not invent facts.
-- Do not promise AI-detector evasion.
+
+CONTENT RULES
+
+- Be useful, original and reader-focused.
+- Follow the requested language and tone.
+- Do not invent facts, statistics, sources or quotations.
+- If information is uncertain, avoid presenting it as fact.
+- Avoid unnecessary repetition and filler.
+- Use natural sentence variation.
+- Use keywords naturally rather than stuffing them.
+- Do not promise AI-detector bypass or guaranteed human detection results.
 - Do not imitate a living writer.
-- Write naturally and clearly.
 """
 
     try:
@@ -127,10 +153,10 @@ Rules:
         client = _client(api_key)
 
         text = _call(
-            client,
-            model,
-            cfg["system"],
-            prompt
+            client=client,
+            model=model,
+            system=cfg["system"],
+            prompt=prompt
         )
 
         return {
@@ -139,15 +165,16 @@ Rules:
             "key": cfg["key"]
         }
 
-    except Exception as e:
+    except Exception as error:
 
-        eid = uuid.uuid4().hex[:8].upper()
+        error_id = uuid.uuid4().hex[:8].upper()
 
         return {
             "ok": False,
             "error": (
                 f"Error ID "
-                f"{stage[:8].upper()}-{eid}: {e}"
+                f"{stage[:8].upper()}-{error_id}: "
+                f"{error}"
             ),
             "key": cfg["key"]
         }
