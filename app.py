@@ -72,14 +72,12 @@ st.caption(
 # ---------------------------------------------------------
 
 with st.sidebar:
-
-    st.header("⚙️ Settings")
+    st.header("Settings")
 
     model = st.selectbox(
-    "AI Model",
-    AVAILABLE_MODELS,
-    index=0
-)
+        "AI Model",
+        AVAILABLE_MODELS,
+        index=0
     )
 
     tone = st.selectbox(
