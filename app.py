@@ -76,12 +76,10 @@ with st.sidebar:
     st.header("⚙️ Settings")
 
     model = st.selectbox(
-        "Groq AI Model",
-        [
-            "llama-3.3-70b-versatile",
-            "llama-3.1-8b-instant"
-        ],
-        index=0
+    "AI Model",
+    AVAILABLE_MODELS,
+    index=0
+)
     )
 
     tone = st.selectbox(
