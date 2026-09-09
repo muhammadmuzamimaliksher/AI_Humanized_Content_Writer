@@ -1,5 +1,11 @@
 APP_NAME = "AI Humanized Content Writer"
 
+AVAILABLE_MODELS = [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.6-27b",
+]
+
 
 # ---------------------------------------------------------
 # AI PIPELINE
