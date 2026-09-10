@@ -178,3 +178,119 @@ CONTENT RULES
             ),
             "key": cfg["key"]
         }
+def run_paragraph_rewrite(
+    paragraph,
+    style,
+    preserve_meaning,
+    improve_readability,
+    remove_repetition,
+    additional_instructions,
+    api_key,
+    model
+):
+    """
+    Rewrite/humanize a single paragraph.
+    """
+
+    
+    preserve_keywords = st.text_input(
+    "Keywords / Terms to Preserve",
+    placeholder="Example: Google Maps SEO, local SEO, Google Business Profile"
+    )
+    
+    system_prompt = f"""
+You are an expert human editor and rewriting specialist.
+
+Your job is to improve the provided paragraph so it reads naturally,
+clearly, and professionally.
+
+The goal is reader-first writing, not AI-detector evasion.
+
+Do not:
+- Invent facts
+- Add unsupported statistics
+- Add fake citations
+- Change factual meaning
+- Add information that was not provided
+- Imitate a living writer
+- Promise AI-detector bypass
+Keywords / terms to preserve:
+
+{preserve_keywords or "None"}
+
+Do not remove or unnecessarily replace these terms.
+Use them naturally.
+Return ONLY the rewritten paragraph.
+Do not explain your changes.
+"""
+
+    user_prompt = f"""
+ORIGINAL PARAGRAPH:
+
+{paragraph}
+
+
+REWRITE STYLE:
+
+{style}
+
+
+REQUIREMENTS:
+
+Preserve original meaning:
+{preserve_meaning}
+
+Improve readability:
+{improve_readability}
+
+Remove repetition and filler:
+{remove_repetition}
+
+Additional instructions:
+{additional_instructions or "None"}
+
+
+REWRITE THE PARAGRAPH NOW.
+
+Important:
+Keep the rewrite focused on the original topic.
+Do not add unrelated information.
+Return only the final rewritten paragraph.
+"""
+rewrite_level = st.select_slider(
+    "Rewrite Intensity",
+    options=[
+        "Light",
+        "Balanced",
+        "Deep"
+    ],
+    value="Balanced"
+)
+    try:
+
+        client = create_client(api_key)
+
+        content = call_groq(
+            client=client,
+            model=model,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            retries=3
+        )
+
+        return {
+            "ok": True,
+            "content": content
+        }
+
+    except Exception as error:
+
+        error_id = uuid.uuid4().hex[:8].upper()
+
+        return {
+            "ok": False,
+            "error": (
+                f"PARAGRAPH-REWRITE-{error_id}: "
+                f"{str(error)}"
+            )
+        }
