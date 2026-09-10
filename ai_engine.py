@@ -251,7 +251,7 @@ Do not explain your changes.
 
     try:
 
-        client = create_client(api_key)
+        client = _client(api_key)
 
         content = call_groq(
             client=client,
