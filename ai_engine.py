@@ -256,8 +256,8 @@ Do not explain your changes.
         content = _call(
             client=client,
             model=model,
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
+            system=system_prompt,
+            prompt=user_prompt,
             retries=3
         )
 
