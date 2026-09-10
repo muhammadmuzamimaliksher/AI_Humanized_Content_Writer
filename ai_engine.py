@@ -253,7 +253,7 @@ Do not explain your changes.
 
         client = _client(api_key)
 
-        content = call_groq(
+        content = _call(
             client=client,
             model=model,
             system_prompt=system_prompt,
