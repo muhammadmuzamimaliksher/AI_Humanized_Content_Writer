@@ -100,8 +100,8 @@ with st.sidebar:
     mode = st.radio(
         "Writing Mode",
         [
-            "Full 8-Stage Content Pipeline",
-            "Paragraph Humanization / Rewrite"
+            "Paragraph Humanization / Rewrite",
+            "Full 8-Stage Content Pipeline"
         ]
     )
     model = st.selectbox(
