@@ -125,8 +125,140 @@ with st.sidebar:
     st.divider()
 
     st.success("Groq API: Connected")
+    
+# ---------------------------------------------------------
+# Add the paragraph input
+# ---------------------------------------------------------
 
+if mode == "Paragraph Humanization / Rewrite":
 
+    st.subheader("Paragraph Humanization / Rewrite")
+
+    paragraph = st.text_area(
+        "Paste your paragraph",
+        height=250,
+        placeholder="Paste the paragraph you want to rewrite..."
+    )
+
+    rewrite_style = st.selectbox(
+        "Rewrite Style",
+        [
+            "Natural & Clear",
+            "Professional",
+            "Conversational",
+            "Friendly",
+            "Persuasive",
+            "Academic",
+            "Simple English"
+        ]
+    )
+
+    preserve_meaning = st.checkbox(
+        "Preserve the original meaning",
+        value=True
+    )
+
+    improve_readability = st.checkbox(
+        "Improve readability",
+        value=True
+    )
+
+    remove_repetition = st.checkbox(
+        "Remove repetition and filler",
+        value=True
+    )
+
+    additional_instructions = st.text_area(
+        "Additional Instructions",
+        height=100,
+        placeholder="Example: Keep it concise and suitable for a business website."
+    )
+
+    if st.button(
+        "✨ Rewrite Paragraph",
+        type="primary"
+    ):
+        if not paragraph.strip():
+
+            st.error(
+                "Please enter a paragraph first."
+            )
+
+        elif len(paragraph.strip()) < 20:
+
+            st.error(
+                "Please enter a longer paragraph "
+                "for a meaningful rewrite."
+            )
+
+        else:
+
+            with st.spinner(
+                "Rewriting your paragraph..."
+            ):
+
+                result = run_paragraph_rewrite(
+                    paragraph=paragraph,
+                    style=rewrite_style,
+                    preserve_meaning=preserve_meaning,
+                    improve_readability=improve_readability,
+                    remove_repetition=remove_repetition,
+                    additional_instructions=additional_instructions,
+                    api_key=api_key,
+                    model=model
+                )
+
+            if result["ok"]:
+
+                st.success(
+                    "Paragraph rewritten successfully!"
+                )
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+
+                    st.markdown("### Original")
+
+                    st.text_area(
+                        "Original Text",
+                        paragraph,
+                        height=300,
+                        disabled=True
+                    )
+
+                with col2:
+
+                    st.markdown("### Rewritten")
+
+                    rewritten = st.text_area(
+                        "Rewritten Text",
+                        result["content"],
+                        height=300
+                    )
+
+                    st.download_button(
+                        "⬇️ Download Rewritten Text",
+                        rewritten,
+                        file_name="rewritten_paragraph.txt",
+                        mime="text/plain"
+                    )
+
+                st.metric(
+                    "Original Words",
+                    word_count(paragraph)
+                )
+
+                st.metric(
+                    "Rewritten Words",
+                    word_count(result["content"])
+                )
+
+            else:
+
+                st.error(result["error"])
+
+    st.stop()
 # ---------------------------------------------------------
 # CONTENT BRIEF
 # ---------------------------------------------------------
