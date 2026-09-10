@@ -178,6 +178,7 @@ CONTENT RULES
             ),
             "key": cfg["key"]
         }
+        
 def run_paragraph_rewrite(
     paragraph,
     style,
@@ -189,39 +190,26 @@ def run_paragraph_rewrite(
     model
 ):
     """
-    Rewrite/humanize a single paragraph.
+    Rewrite a single paragraph using Groq.
     """
 
-    
-    preserve_keywords = st.text_input(
-    "Keywords / Terms to Preserve",
-    placeholder="Example: Google Maps SEO, local SEO, Google Business Profile"
-    )
-    
-    system_prompt = f"""
-You are an expert human editor and rewriting specialist.
+    system_prompt = """
+You are an expert professional content editor.
 
-Your job is to improve the provided paragraph so it reads naturally,
-clearly, and professionally.
+Rewrite the user's paragraph so it is natural,
+clear, readable, and well structured.
 
-The goal is reader-first writing, not AI-detector evasion.
-
-Do not:
-- Invent facts
-- Add unsupported statistics
-- Add fake citations
-- Change factual meaning
-- Add information that was not provided
-- Imitate a living writer
-- Promise AI-detector bypass
-Keywords / terms to preserve:
-
-{preserve_keywords or "None"}
-
-Do not remove or unnecessarily replace these terms.
-Use them naturally.
-Return ONLY the rewritten paragraph.
-Do not explain your changes.
+Important rules:
+- Preserve the original meaning.
+- Do not invent facts.
+- Do not add unsupported statistics.
+- Do not add fake citations.
+- Do not add unrelated information.
+- Remove unnecessary repetition and filler.
+- Improve sentence flow and readability.
+- Do not imitate a living writer.
+- Do not promise AI-detector bypass.
+- Return ONLY the rewritten paragraph.
 """
 
     user_prompt = f"""
@@ -235,37 +223,32 @@ REWRITE STYLE:
 {style}
 
 
-REQUIREMENTS:
+PRESERVE ORIGINAL MEANING:
 
-Preserve original meaning:
 {preserve_meaning}
 
-Improve readability:
+
+IMPROVE READABILITY:
+
 {improve_readability}
 
-Remove repetition and filler:
+
+REMOVE REPETITION AND FILLER:
+
 {remove_repetition}
 
-Additional instructions:
+
+ADDITIONAL INSTRUCTIONS:
+
 {additional_instructions or "None"}
 
 
-REWRITE THE PARAGRAPH NOW.
+Rewrite the paragraph now.
 
-Important:
-Keep the rewrite focused on the original topic.
-Do not add unrelated information.
-Return only the final rewritten paragraph.
+Return ONLY the final rewritten paragraph.
+Do not explain your changes.
 """
-rewrite_level = st.select_slider(
-    "Rewrite Intensity",
-    options=[
-        "Light",
-        "Balanced",
-        "Deep"
-    ],
-    value="Balanced"
-)
+
     try:
 
         client = create_client(api_key)
@@ -278,9 +261,14 @@ rewrite_level = st.select_slider(
             retries=3
         )
 
+        if not content or not content.strip():
+            raise RuntimeError(
+                "Groq returned an empty response."
+            )
+
         return {
             "ok": True,
-            "content": content
+            "content": content.strip()
         }
 
     except Exception as error:
