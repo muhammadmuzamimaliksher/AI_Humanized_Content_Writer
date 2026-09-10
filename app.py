@@ -73,7 +73,13 @@ st.caption(
 
 with st.sidebar:
     st.header("Settings")
-
+    mode = st.radio(
+        "Writing Mode",
+        [
+            "Full 8-Stage Content Pipeline",
+            "Paragraph Humanization / Rewrite"
+        ]
+    )
     model = st.selectbox(
         "AI Model",
         AVAILABLE_MODELS,
